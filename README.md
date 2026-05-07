@@ -4,6 +4,31 @@ Toolkit personal multi-agente para reutilizar workflows de desarrollo entre Clau
 
 La idea central es mantener una sola fuente de verdad en `core/` y generar adapters finos para cada CLI. El primer flujo soportado es `opsx`, un wrapper práctico sobre OpenSpec / Spec-Driven Development.
 
+## Quickstart
+
+Instalar los plugins en Claude Code (requiere `gh auth login` o git autenticado):
+
+```bash
+claude plugin marketplace add TobiasMoreno/marketplace
+claude plugin install tat-opsx-openspec@tat-marketplace
+claude plugin install tat-review-tools@tat-marketplace
+```
+
+Si ya tenías una sesión abierta:
+
+```text
+/reload-plugins
+```
+
+Probar:
+
+```text
+/tat-review-tools:tat-review
+/tat-opsx-openspec:tat-opsx-explore
+```
+
+Más detalle (instalación local, preregistro por proyecto, updates, Codex) en [Distribución](#distribución).
+
 ## Estado actual
 
 Este repo está en MVP local.
@@ -29,21 +54,26 @@ Fuera de este MVP:
 
 ```text
 core/
-  workflows/opsx/<stage>/
-    meta.yaml
-    body.md
-  rules/
-  templates/
+  workflows/opsx/<stage>/   meta.yaml + body.md  → skill por stage
+  skills/<name>/            meta.yaml + body.md  → skill standalone
+  agents/<name>.md          frontmatter + body   → solo Claude
+  commands/<name>.md        frontmatter + body   → solo Claude
+  hooks/                    JSON de hooks
+  scripts/                  scripts referenciados por hooks/commands
+  rules/                    rule chunks reutilizables
+  templates/                templates de OpenSpec
         |
         | npm run build
         v
 adapters/
   claude/
     CLAUDE.md
-    plugins/opsx-openspec/
+    plugins/tat-opsx-openspec/   skills + hooks + scripts
+    plugins/tat-review-tools/    skills + agents + commands
   codex/
     AGENTS.md
-    plugins/opsx-openspec/
+    plugins/tat-opsx-openspec/   solo skills
+    plugins/tat-review-tools/    solo skills
 ```
 
 ## Principios
@@ -58,29 +88,36 @@ adapters/
 ## Estructura
 
 ```text
+.claude-plugin/
+  marketplace.json              catálogo del marketplace tat-marketplace
+
 core/
-  workflows/
-    opsx/
-      explore/
-      propose/
-      apply/
-      archive/
-  rules/
-    sdd-rules.md
-    product-engineer-rules.md
-  templates/
-    openspec/
+  workflows/opsx/{explore,propose,apply,archive}/
+    meta.yaml
+    body.md
+  skills/{review,openspec-guardian,unused-files}/
+    meta.yaml
+    body.md
+  agents/security-reviewer.md
+  commands/tat-update.md
+  hooks/session-start.json
+  scripts/check-updates.mjs
+  rules/{sdd-rules.md, product-engineer-rules.md}
+  templates/openspec/
 
 scripts/
-  build.mjs
+  build.mjs                     genera adapters/ desde core/
 
-adapters/
+adapters/                       generado, no editar a mano
   claude/
   codex/
 
 openspec/
   changes/
   specs/
+
+docs/
+  claude-plugin-root.md
 ```
 
 ## Desarrollo
@@ -157,7 +194,7 @@ Codex solo recibe las skills del plugin; agents y commands son features exclusiv
 
 ## Distribución
 
-Este repo funciona como marketplace de Claude Code. El catálogo vive en `.claude-plugin/marketplace.json` y publica el plugin `tat-opsx-openspec`.
+Este repo funciona como marketplace de Claude Code. El catálogo vive en `.claude-plugin/marketplace.json` y publica los plugins `tat-opsx-openspec` y `tat-review-tools`.
 
 ### Instalar para Claude Code (desde GitHub)
 
@@ -178,6 +215,7 @@ Si ya tenés una sesión abierta:
 ```bash
 claude plugin marketplace add /ruta/a/tobias-agent-toolkit
 claude plugin install tat-opsx-openspec@tat-marketplace
+claude plugin install tat-review-tools@tat-marketplace
 ```
 
 ### Preregistrar el marketplace en un repo consumidor
@@ -189,39 +227,43 @@ Copiá `.claude/settings.example.json` a `.claude/settings.json` en el repo dond
 ```bash
 claude plugin marketplace update tat-marketplace
 claude plugin update tat-opsx-openspec@tat-marketplace
+claude plugin update tat-review-tools@tat-marketplace
 ```
 
-Después en la sesión: `/reload-plugins`.
+O directamente desde la sesión: `/tat-update` (aplica updates pendientes y reporta el delta) seguido de `/reload-plugins`.
 
 ### Auto-update (SessionStart hook)
 
-El plugin incluye `hooks/hooks.json` que dispara `scripts/check-updates.mjs` al iniciar cada sesión. Compara la versión instalada contra el catálogo y, si hay diferencia, emite un `systemMessage` no bloqueante:
+El plugin `tat-opsx-openspec` incluye `hooks/hooks.json` que dispara `scripts/check-updates.mjs` al iniciar cada sesión. Compara la versión instalada contra el catálogo y, si hay diferencia, emite un `systemMessage` no bloqueante:
 
 ```text
-[tat] N plugin update(s) available. Open /plugin to apply.
+[tat] N plugin update(s) available. Run /tat-update to apply.
 ```
 
 Es best-effort: si falla cualquier paso (red, CLI, JSON), sale en silencio. Para desactivarlo, exportá `TAT_AUTO_UPDATE_DISABLE=1` en tu shell.
 
-Importante: Claude Code solo distribuye updates cuando cambia `version` en `plugin.json`. Después de editar `core/`, hay que bumpear `pluginVersion` en `scripts/build.mjs` y regenerar.
+Sobre paths dentro del plugin instalado, ver [docs/claude-plugin-root.md](./docs/claude-plugin-root.md).
+
+Importante: Claude Code solo distribuye updates cuando cambia `version` en `plugin.json`. Después de editar `core/`, hay que bumpear el `version` de la entrada correspondiente en el dict `PLUGINS` de `scripts/build.mjs` y regenerar con `npm run build`.
 
 ### Instalar para Codex (manual)
 
-Codex no tiene marketplace nativo equivalente. El plugin generado vive en:
+Codex no tiene marketplace nativo equivalente. Los plugins generados viven en:
 
 ```text
 adapters/codex/plugins/tat-opsx-openspec/
+adapters/codex/plugins/tat-review-tools/
 ```
 
-Para usarlo, registralo en tu config de Codex apuntando a esa ruta (o copialo a la ubicación que tu instalación de Codex espere). El contenido de las skills es idéntico al de Claude, generado desde el mismo `core/`.
+Para usarlos, registralos en tu config de Codex apuntando a esas rutas (o copialos a la ubicación que tu instalación de Codex espere). El contenido de las skills es idéntico al de Claude, generado desde el mismo `core/`. Codex solo recibe skills — agents, commands y hooks son features exclusivas de Claude Code.
 
 ## Roadmap próximo
 
-- Agregar `opsx-review-spec`.
-- Endurecer schemas de plugin si Claude/Codex requieren metadata adicional.
-- Agregar CI para `npm run build:check`.
-- Diseñar instalación local para Codex.
-- Diseñar publicación marketplace para Claude.
+- Agregar `tat-opsx-review-spec`.
+- Script de instalación automática para Codex (`scripts/install-codex.mjs`).
+- CI con `npm run build:check` para evitar drift en PRs.
+- MCP server propio (ej. `tat-personal-memory`).
+- Agregar `tat-architect` y `tat-release-checklist` cuando aplique.
 
 ## Licencia
 
