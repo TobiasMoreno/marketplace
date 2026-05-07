@@ -1,0 +1,21 @@
+{
+  "name": "tat-review-tools",
+  "version": "0.1.0",
+  "description": "Review, governance, cleanup skills, security agent and update command for the tat marketplace.",
+  "author": {
+    "name": "Tobias Moreno"
+  },
+  "keywords": [
+    "tat",
+    "review",
+    "security",
+    "cleanup",
+    "openspec",
+    "claude-code"
+  ],
+  "skills": [
+    "tat-openspec-guardian",
+    "tat-review",
+    "tat-unused-files"
+  ]
+}

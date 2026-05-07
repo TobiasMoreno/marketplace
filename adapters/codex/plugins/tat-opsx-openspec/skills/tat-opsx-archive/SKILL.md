@@ -1,10 +1,9 @@
-<!-- GENERATED FROM core/workflows/opsx/archive - do not edit by hand -->
-
 ---
+# GENERATED FROM core/workflows/opsx/archive - do not edit by hand
 name: tat-opsx-archive
-description: Archive a completed OpenSpec change after checking artifact and task completion.
+description: "Archive a completed OpenSpec change after checking artifact and task completion."
 license: MIT
-compatibility: Requires openspec CLI.
+compatibility: "Requires openspec CLI."
 metadata:
   adapter: codex
   generatedBy: tobias-agent-toolkit

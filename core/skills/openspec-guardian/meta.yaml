@@ -1,0 +1,3 @@
+name: tat-openspec-guardian
+description: "Use when: el usuario propone un cambio (feature, fix, refactor, ajuste de negocio) y hay que decidir si debe gestionarse via OpenSpec; cuando se quieren validar los openspecs abiertos (no archivados) del repo; o cuando conviene auditar si los cambios generados en la sesion debieron ser un OpenSpec. Actua como tech lead / guru: da veredicto binario, cita la regla aplicada y recomienda el siguiente paso."
+disable-model-invocation: true

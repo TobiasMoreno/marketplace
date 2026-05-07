@@ -1,0 +1,3 @@
+name: tat-review
+description: "Use when: revisando codigo, pull requests, diffs o cambios recientes antes de merge; buscando bugs, regresiones, riesgos de seguridad, problemas de performance o mejoras de mantenibilidad. Devuelve hallazgos priorizados por severidad con fix sugerido, no comentarios cosmeticos."
+disable-model-invocation: true

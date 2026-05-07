@@ -101,15 +101,20 @@ npm run build:check
 
 `npm run build:check` compara los adapters generados contra lo que `core/` produciría ahora. Si hay drift, falla sin modificar archivos.
 
-## Cómo editar una skill
+## Cómo editar `core/`
 
-Editá solo `core/`.
+Editá solo `core/`. La estructura tiene cuatro tipos de fuente:
 
-Ejemplo:
+- `core/workflows/opsx/<stage>/{meta.yaml, body.md}` — workflows OPSX (4 stages, llegan a Claude y Codex).
+- `core/skills/<name>/{meta.yaml, body.md}` — skills standalone (llegan a Claude y Codex).
+- `core/agents/<name>.md` — subagents con frontmatter completo (solo Claude).
+- `core/commands/<name>.md` — slash commands con frontmatter completo (solo Claude).
+
+Ejemplo de cambio en una skill standalone:
 
 ```text
-core/workflows/opsx/propose/body.md
-core/workflows/opsx/propose/meta.yaml
+core/skills/review/body.md
+core/skills/review/meta.yaml
 ```
 
 Después regenerá:
@@ -119,9 +124,15 @@ npm run build
 npm run build:check
 ```
 
-No edites a mano archivos bajo `adapters/`. Los archivos generados incluyen un banner con el path fuente.
+No edites a mano archivos bajo `adapters/`. Los archivos generados incluyen un banner como comentario YAML dentro del frontmatter (`# GENERATED FROM ...`).
 
-## Flujo opsx
+Para que los usuarios reciban un cambio via `claude plugin update`, hay que bumpear `version` en la entrada correspondiente de `PLUGINS` dentro de `scripts/build.mjs`.
+
+## Plugins publicados
+
+El marketplace publica dos plugins:
+
+### `tat-opsx-openspec` — flujo OPSX
 
 | Skill | Propósito |
 | --- | --- |
@@ -129,6 +140,20 @@ No edites a mano archivos bajo `adapters/`. Los archivos generados incluyen un b
 | `tat-opsx-propose` | Crear un change OpenSpec y sus artifacts hasta quedar listo para aplicar. |
 | `tat-opsx-apply` | Implementar tareas pendientes de un change activo. |
 | `tat-opsx-archive` | Archivar un change completado. |
+
+Incluye además el SessionStart hook de auto-update.
+
+### `tat-review-tools` — revisión, gobernanza y limpieza
+
+| Componente | Tipo | Propósito |
+| --- | --- | --- |
+| `tat-review` | Skill | Revisión de código con hallazgos priorizados por severidad. |
+| `tat-openspec-guardian` | Skill | Decide si un cambio debe ir por OpenSpec; cita la regla aplicada. |
+| `tat-unused-files` | Skill | Auditor de archivos sin uso, ordenados por credibilidad de borrado. |
+| `tat-security-reviewer` | Agent | Revisor de seguridad invocable con `@agent-tat-review-tools:tat-security-reviewer`. |
+| `tat-update` | Command | `/tat-update` — aplica updates pendientes del marketplace y reporta el delta. |
+
+Codex solo recibe las skills del plugin; agents y commands son features exclusivas de Claude Code.
 
 ## Distribución
 
@@ -139,6 +164,7 @@ Este repo funciona como marketplace de Claude Code. El catálogo vive en `.claud
 ```bash
 claude plugin marketplace add TobiasMoreno/marketplace
 claude plugin install tat-opsx-openspec@tat-marketplace
+claude plugin install tat-review-tools@tat-marketplace
 ```
 
 Si ya tenés una sesión abierta:

@@ -1,10 +1,9 @@
-<!-- GENERATED FROM core/workflows/opsx/propose - do not edit by hand -->
-
 ---
+# GENERATED FROM core/workflows/opsx/propose - do not edit by hand
 name: tat-opsx-propose
-description: Create an OpenSpec change with proposal, design, specs, and tasks until it is ready for implementation.
+description: "Create an OpenSpec change with proposal, design, specs, and tasks until it is ready for implementation."
 license: MIT
-compatibility: Requires openspec CLI.
+compatibility: "Requires openspec CLI."
 metadata:
   adapter: claude
   generatedBy: tobias-agent-toolkit

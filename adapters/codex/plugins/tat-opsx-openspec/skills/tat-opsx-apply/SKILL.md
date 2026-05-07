@@ -1,10 +1,9 @@
-<!-- GENERATED FROM core/workflows/opsx/apply - do not edit by hand -->
-
 ---
+# GENERATED FROM core/workflows/opsx/apply - do not edit by hand
 name: tat-opsx-apply
-description: Implement pending tasks from an active OpenSpec change and mark tasks complete as work is finished.
+description: "Implement pending tasks from an active OpenSpec change and mark tasks complete as work is finished."
 license: MIT
-compatibility: Requires openspec CLI.
+compatibility: "Requires openspec CLI."
 metadata:
   adapter: codex
   generatedBy: tobias-agent-toolkit

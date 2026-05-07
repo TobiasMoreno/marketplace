@@ -113,7 +113,7 @@ async function main() {
   }
 
   if (count > 0) {
-    const msg = `[tat] ${count} plugin update(s) available. Open /plugin to apply.`;
+    const msg = `[tat] ${count} plugin update(s) available. Run /tat-update to apply.`;
     process.stdout.write(`${JSON.stringify({ systemMessage: msg })}\n`);
   }
 }

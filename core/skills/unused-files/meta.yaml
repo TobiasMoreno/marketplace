@@ -1,0 +1,3 @@
+name: tat-unused-files
+description: "Use when: limpiando el repositorio, buscando archivos muertos, huerfanos, duplicados o agregados por error; verificando scripts, assets, tests, snapshots, docs o prototipos que ya no se usan. Entrega candidatos ordenados de mayor a menor credibilidad de borrado e incluye cuando entraron al git."
+disable-model-invocation: true

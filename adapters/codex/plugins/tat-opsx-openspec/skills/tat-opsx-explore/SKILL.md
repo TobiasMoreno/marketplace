@@ -1,10 +1,9 @@
-<!-- GENERATED FROM core/workflows/opsx/explore - do not edit by hand -->
-
 ---
+# GENERATED FROM core/workflows/opsx/explore - do not edit by hand
 name: tat-opsx-explore
-description: Enter explore mode to investigate code, clarify requirements, and think through options before or during an OpenSpec change.
+description: "Enter explore mode to investigate code, clarify requirements, and think through options before or during an OpenSpec change."
 license: MIT
-compatibility: Requires openspec CLI.
+compatibility: "Requires openspec CLI."
 metadata:
   adapter: codex
   generatedBy: tobias-agent-toolkit

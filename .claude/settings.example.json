@@ -1,6 +1,7 @@
 {
   "enabledPlugins": {
-    "tat-opsx-openspec@tat-marketplace": true
+    "tat-opsx-openspec@tat-marketplace": true,
+    "tat-review-tools@tat-marketplace": true
   },
   "extraKnownMarketplaces": {
     "tat-marketplace": {

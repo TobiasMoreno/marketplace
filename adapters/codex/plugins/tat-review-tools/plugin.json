@@ -1,0 +1,26 @@
+{
+  "id": "tat-review-tools",
+  "name": "TAT Review Tools",
+  "version": "0.1.0",
+  "description": "Review, governance, cleanup skills, security agent and update command for the tat marketplace.",
+  "author": {
+    "name": "Tobias Moreno"
+  },
+  "skills": [
+    {
+      "name": "tat-openspec-guardian",
+      "description": "Use when: el usuario propone un cambio (feature, fix, refactor, ajuste de negocio) y hay que decidir si debe gestionarse via OpenSpec; cuando se quieren validar los openspecs abiertos (no archivados) del repo; o cuando conviene auditar si los cambios generados en la sesion debieron ser un OpenSpec. Actua como tech lead / guru: da veredicto binario, cita la regla aplicada y recomienda el siguiente paso.",
+      "path": "skills/tat-openspec-guardian/SKILL.md"
+    },
+    {
+      "name": "tat-review",
+      "description": "Use when: revisando codigo, pull requests, diffs o cambios recientes antes de merge; buscando bugs, regresiones, riesgos de seguridad, problemas de performance o mejoras de mantenibilidad. Devuelve hallazgos priorizados por severidad con fix sugerido, no comentarios cosmeticos.",
+      "path": "skills/tat-review/SKILL.md"
+    },
+    {
+      "name": "tat-unused-files",
+      "description": "Use when: limpiando el repositorio, buscando archivos muertos, huerfanos, duplicados o agregados por error; verificando scripts, assets, tests, snapshots, docs o prototipos que ya no se usan. Entrega candidatos ordenados de mayor a menor credibilidad de borrado e incluye cuando entraron al git.",
+      "path": "skills/tat-unused-files/SKILL.md"
+    }
+  ]
+}

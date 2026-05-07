@@ -4,13 +4,41 @@ import process from "node:process";
 
 const root = process.cwd();
 const checkMode = process.argv.includes("--check");
-const pluginId = "tat-opsx-openspec";
-const pluginVersion = "0.2.0";
-const pluginAuthor = { name: "Tobias Moreno" };
-const pluginKeywords = ["tat", "opsx", "openspec", "claude-code", "codex", "workflow"];
+
+const author = { name: "Tobias Moreno" };
+
+const PLUGINS = {
+  opsx: {
+    id: "tat-opsx-openspec",
+    version: "0.2.0",
+    description: "OpenSpec workflow skills generated from tobias-agent-toolkit core.",
+    codexName: "TAT OPSX OpenSpec",
+    keywords: ["tat", "opsx", "openspec", "claude-code", "codex", "workflow"],
+    compatibility: "Requires openspec CLI.",
+  },
+  review: {
+    id: "tat-review-tools",
+    version: "0.1.0",
+    description:
+      "Review, governance, cleanup skills, security agent and update command for the tat marketplace.",
+    codexName: "TAT Review Tools",
+    keywords: ["tat", "review", "security", "cleanup", "openspec", "claude-code"],
+    compatibility: null,
+  },
+};
 
 function posixPath(value) {
   return value.split(path.sep).join("/");
+}
+
+function unquote(value) {
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    return value.slice(1, -1);
+  }
+  return value;
 }
 
 function parseMeta(source, filePath) {
@@ -53,33 +81,59 @@ function parseMeta(source, filePath) {
   return meta;
 }
 
-function unquote(value) {
-  if (
-    (value.startsWith('"') && value.endsWith('"')) ||
-    (value.startsWith("'") && value.endsWith("'"))
-  ) {
-    return value.slice(1, -1);
-  }
-  return value;
+async function readSkillFolder(dir) {
+  const relSource = posixPath(path.relative(root, dir));
+  const metaPath = path.join(dir, "meta.yaml");
+  const bodyPath = path.join(dir, "body.md");
+  const meta = parseMeta(await readFile(metaPath, "utf8"), metaPath);
+  const body = (await readFile(bodyPath, "utf8")).trimEnd();
+  const rules = await readRules(meta.rules);
+  return { relSource, meta, body, rules };
 }
 
 async function readWorkflows() {
   const base = path.join(root, "core", "workflows", "opsx");
   const entries = await readdir(base, { withFileTypes: true });
   const workflows = [];
-
   for (const entry of entries.filter((item) => item.isDirectory())) {
-    const workflowDir = path.join(base, entry.name);
-    const relSource = posixPath(path.relative(root, workflowDir));
-    const metaPath = path.join(workflowDir, "meta.yaml");
-    const bodyPath = path.join(workflowDir, "body.md");
-    const meta = parseMeta(await readFile(metaPath, "utf8"), metaPath);
-    const body = (await readFile(bodyPath, "utf8")).trimEnd();
-    const rules = await readRules(meta.rules);
-    workflows.push({ stage: entry.name, relSource, meta, body, rules });
+    const skill = await readSkillFolder(path.join(base, entry.name));
+    workflows.push(skill);
   }
-
   return workflows.sort((a, b) => a.meta.name.localeCompare(b.meta.name));
+}
+
+async function readStandaloneSkills() {
+  const base = path.join(root, "core", "skills");
+  let entries = [];
+  try {
+    entries = await readdir(base, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const skills = [];
+  for (const entry of entries.filter((item) => item.isDirectory())) {
+    const skill = await readSkillFolder(path.join(base, entry.name));
+    skills.push(skill);
+  }
+  return skills.sort((a, b) => a.meta.name.localeCompare(b.meta.name));
+}
+
+async function readPassthroughs(subdir) {
+  const base = path.join(root, "core", subdir);
+  let entries = [];
+  try {
+    entries = await readdir(base, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const items = [];
+  for (const entry of entries.filter((item) => item.isFile() && item.name.endsWith(".md"))) {
+    const filePath = path.join(base, entry.name);
+    const relSource = posixPath(path.relative(root, filePath));
+    const content = await readFile(filePath, "utf8");
+    items.push({ name: entry.name, relSource, content });
+  }
+  return items.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 async function readRules(ruleIds) {
@@ -92,61 +146,72 @@ async function readRules(ruleIds) {
   return chunks;
 }
 
-function generatedBanner(workflow) {
-  return `<!-- GENERATED FROM ${workflow.relSource} - do not edit by hand -->`;
+function generatedBannerLine(relSource) {
+  return `# GENERATED FROM ${relSource} - do not edit by hand`;
 }
 
-function renderSkill(workflow, adapter) {
-  const { meta, body, rules } = workflow;
-  const frontmatter = [
-    "---",
-    `name: ${meta.name}`,
-    `description: ${meta.description}`,
-    "license: MIT",
-    "compatibility: Requires openspec CLI.",
-    "metadata:",
-    `  adapter: ${adapter}`,
-    "  generatedBy: tobias-agent-toolkit",
-    "---",
-  ].join("\n");
-
-  const ruleBlock = rules.length
-    ? ["## Included Rules", ...rules].join("\n\n")
-    : "";
-
-  return [generatedBanner(workflow), frontmatter, body, ruleBlock]
-    .filter(Boolean)
-    .join("\n\n")
-    .concat("\n");
+function yamlString(value) {
+  return JSON.stringify(value);
 }
 
-function renderClaudePlugin(workflows) {
+function renderSkill(skill, adapter, opts = {}) {
+  const { meta, body, rules, relSource } = skill;
+  const fm = ["---", generatedBannerLine(relSource)];
+  fm.push(`name: ${meta.name}`);
+  fm.push(`description: ${yamlString(meta.description)}`);
+  fm.push("license: MIT");
+  if (opts.compatibility) {
+    fm.push(`compatibility: ${yamlString(opts.compatibility)}`);
+  }
+  if (meta["disable-model-invocation"] === "true") {
+    fm.push("disable-model-invocation: true");
+  }
+  fm.push("metadata:");
+  fm.push(`  adapter: ${adapter}`);
+  fm.push("  generatedBy: tobias-agent-toolkit");
+  fm.push("---");
+
+  const frontmatter = fm.join("\n");
+  const ruleBlock = rules.length ? ["## Included Rules", ...rules].join("\n\n") : "";
+  return [frontmatter, body, ruleBlock].filter(Boolean).join("\n\n").concat("\n");
+}
+
+function renderPassthrough(item) {
+  const lines = item.content.split(/\r?\n/);
+  if (lines[0] !== "---") {
+    throw new Error(`Expected frontmatter at line 1 of ${item.relSource}`);
+  }
+  const banner = generatedBannerLine(item.relSource);
+  return [lines[0], banner, ...lines.slice(1)].join("\n");
+}
+
+function renderClaudePlugin(plugin, skills) {
   return `${JSON.stringify(
     {
-      name: pluginId,
-      version: pluginVersion,
-      description: "OpenSpec workflow skills generated from tobias-agent-toolkit core.",
-      author: pluginAuthor,
-      keywords: pluginKeywords,
-      skills: workflows.map((workflow) => workflow.meta.name),
+      name: plugin.id,
+      version: plugin.version,
+      description: plugin.description,
+      author,
+      keywords: plugin.keywords,
+      skills: skills.map((skill) => skill.meta.name),
     },
     null,
     2,
   )}\n`;
 }
 
-function renderCodexPlugin(workflows) {
+function renderCodexPlugin(plugin, skills) {
   return `${JSON.stringify(
     {
-      id: pluginId,
-      name: "TAT OPSX OpenSpec",
-      version: pluginVersion,
-      description: "OpenSpec workflow skills generated from tobias-agent-toolkit core.",
-      author: pluginAuthor,
-      skills: workflows.map((workflow) => ({
-        name: workflow.meta.name,
-        description: workflow.meta.description,
-        path: `skills/${workflow.meta.name}/SKILL.md`,
+      id: plugin.id,
+      name: plugin.codexName,
+      version: plugin.version,
+      description: plugin.description,
+      author,
+      skills: skills.map((skill) => ({
+        name: skill.meta.name,
+        description: skill.meta.description,
+        path: `skills/${skill.meta.name}/SKILL.md`,
       })),
     },
     null,
@@ -154,65 +219,104 @@ function renderCodexPlugin(workflows) {
   )}\n`;
 }
 
-function renderAgentFile(adapter) {
+function renderAdapterReadme(adapter) {
   return [
     `# ${adapter === "claude" ? "Claude" : "Codex"} Adapter`,
     "",
     "This adapter is generated from `core/`.",
-    "Do not edit generated plugin skill files by hand.",
+    "Do not edit generated plugin files by hand.",
     "",
   ].join("\n");
 }
 
 async function expectedFiles() {
   const workflows = await readWorkflows();
+  const standalone = await readStandaloneSkills();
+  const agents = await readPassthroughs("agents");
+  const commands = await readPassthroughs("commands");
   const files = new Map();
 
+  const opsx = PLUGINS.opsx;
   for (const adapter of ["claude", "codex"]) {
-    for (const workflow of workflows) {
+    for (const wf of workflows) {
       files.set(
         path.join(
           root,
           "adapters",
           adapter,
           "plugins",
-          pluginId,
+          opsx.id,
           "skills",
-          workflow.meta.name,
+          wf.meta.name,
           "SKILL.md",
         ),
-        renderSkill(workflow, adapter),
+        renderSkill(wf, adapter, { compatibility: opsx.compatibility }),
       );
     }
+  }
+  files.set(
+    path.join(root, "adapters", "claude", "plugins", opsx.id, ".claude-plugin", "plugin.json"),
+    renderClaudePlugin(opsx, workflows),
+  );
+  files.set(
+    path.join(root, "adapters", "codex", "plugins", opsx.id, "plugin.json"),
+    renderCodexPlugin(opsx, workflows),
+  );
+  files.set(
+    path.join(root, "adapters", "claude", "plugins", opsx.id, "hooks", "hooks.json"),
+    await readFile(path.join(root, "core", "hooks", "session-start.json"), "utf8"),
+  );
+  files.set(
+    path.join(root, "adapters", "claude", "plugins", opsx.id, "scripts", "check-updates.mjs"),
+    await readFile(path.join(root, "core", "scripts", "check-updates.mjs"), "utf8"),
+  );
+
+  const review = PLUGINS.review;
+  for (const adapter of ["claude", "codex"]) {
+    for (const skill of standalone) {
+      files.set(
+        path.join(
+          root,
+          "adapters",
+          adapter,
+          "plugins",
+          review.id,
+          "skills",
+          skill.meta.name,
+          "SKILL.md",
+        ),
+        renderSkill(skill, adapter, { compatibility: review.compatibility }),
+      );
+    }
+  }
+  files.set(
+    path.join(root, "adapters", "claude", "plugins", review.id, ".claude-plugin", "plugin.json"),
+    renderClaudePlugin(review, standalone),
+  );
+  files.set(
+    path.join(root, "adapters", "codex", "plugins", review.id, "plugin.json"),
+    renderCodexPlugin(review, standalone),
+  );
+  for (const agent of agents) {
+    files.set(
+      path.join(root, "adapters", "claude", "plugins", review.id, "agents", agent.name),
+      renderPassthrough(agent),
+    );
+  }
+  for (const cmd of commands) {
+    files.set(
+      path.join(root, "adapters", "claude", "plugins", review.id, "commands", cmd.name),
+      renderPassthrough(cmd),
+    );
   }
 
   files.set(
     path.join(root, "adapters", "claude", "CLAUDE.md"),
-    renderAgentFile("claude"),
-  );
-  files.set(
-    path.join(root, "adapters", "claude", "plugins", pluginId, ".claude-plugin", "plugin.json"),
-    renderClaudePlugin(workflows),
+    renderAdapterReadme("claude"),
   );
   files.set(
     path.join(root, "adapters", "codex", "AGENTS.md"),
-    renderAgentFile("codex"),
-  );
-  files.set(
-    path.join(root, "adapters", "codex", "plugins", pluginId, "plugin.json"),
-    renderCodexPlugin(workflows),
-  );
-
-  const hookSrc = path.join(root, "core", "hooks", "session-start.json");
-  files.set(
-    path.join(root, "adapters", "claude", "plugins", pluginId, "hooks", "hooks.json"),
-    await readFile(hookSrc, "utf8"),
-  );
-
-  const updateScriptSrc = path.join(root, "core", "scripts", "check-updates.mjs");
-  files.set(
-    path.join(root, "adapters", "claude", "plugins", pluginId, "scripts", "check-updates.mjs"),
-    await readFile(updateScriptSrc, "utf8"),
+    renderAdapterReadme("codex"),
   );
 
   return files;
@@ -220,22 +324,18 @@ async function expectedFiles() {
 
 async function build() {
   const files = await expectedFiles();
-
   await rm(path.join(root, "adapters", "claude"), { recursive: true, force: true });
   await rm(path.join(root, "adapters", "codex"), { recursive: true, force: true });
-
   for (const [filePath, content] of files) {
     await mkdir(path.dirname(filePath), { recursive: true });
     await writeFile(filePath, content, "utf8");
   }
-
   console.log(`Generated ${files.size} adapter files.`);
 }
 
 async function check() {
   const files = await expectedFiles();
   const drift = [];
-
   for (const [filePath, expected] of files) {
     let actual = null;
     try {
@@ -244,19 +344,16 @@ async function check() {
       drift.push(posixPath(path.relative(root, filePath)));
       continue;
     }
-
     if (actual !== expected) {
       drift.push(posixPath(path.relative(root, filePath)));
     }
   }
-
   if (drift.length) {
     console.error("Generated adapter drift detected:");
     for (const filePath of drift) console.error(`- ${filePath}`);
     process.exitCode = 1;
     return;
   }
-
   console.log(`No generated adapter drift detected (${files.size} files checked).`);
 }
 
