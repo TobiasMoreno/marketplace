@@ -1,0 +1,14 @@
+{
+  "name": "tobias-agent-toolkit",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Personal multi-agent toolkit generated from a shared core for Claude Code and Codex.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:check": "node scripts/build.mjs --check"
+  }
+}

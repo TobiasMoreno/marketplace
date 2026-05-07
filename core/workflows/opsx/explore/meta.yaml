@@ -1,0 +1,8 @@
+name: tat-opsx-explore
+description: Enter explore mode to investigate code, clarify requirements, and think through options before or during an OpenSpec change.
+triggers:
+  - explore an idea before proposing a change
+  - investigate code or specs without implementing
+rules:
+  - sdd
+  - product-engineer

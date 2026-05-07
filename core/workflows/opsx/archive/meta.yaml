@@ -1,0 +1,9 @@
+name: tat-opsx-archive
+description: Archive a completed OpenSpec change after checking artifact and task completion.
+triggers:
+  - archive a completed change
+  - finalize an OpenSpec change
+  - close out implementation
+rules:
+  - sdd
+  - product-engineer

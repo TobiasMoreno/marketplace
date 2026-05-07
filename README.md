@@ -1,169 +1,202 @@
-# Objetivo
+# tobias-agent-toolkit
 
-Quiero construir un toolkit personal multi-agente para reutilizar mis workflows de desarrollo con Claude Code y Codex.
+Toolkit personal multi-agente para reutilizar workflows de desarrollo entre Claude Code y Codex.
 
-No quiero crear dos sistemas separados. Quiero un repo único con un `core` agnóstico y adapters específicos para cada CLI.
+La idea central es mantener una sola fuente de verdad en `core/` y generar adapters finos para cada CLI. El primer flujo soportado es `opsx`, un wrapper práctico sobre OpenSpec / Spec-Driven Development.
 
-## Nombre del repo
+## Estado actual
 
-`tobias-agent-toolkit`
+Este repo está en MVP local.
 
-## Contexto
+Ya incluye:
 
-Trabajo con agentes de IA para desarrollo y quiero tener un flujo reutilizable, mantenible y portable entre herramientas.
+- `core/` como fuente editable de workflows, rules y templates.
+- Workflows `tat-opsx-explore`, `tat-opsx-propose`, `tat-opsx-apply` y `tat-opsx-archive`.
+- Generación de adapters para Claude y Codex.
+- Validación de drift entre `core/` y `adapters/`.
+- Scripts Node.js portables para Windows, macOS y Linux.
+- Distribución como marketplace de Claude Code (`tat-marketplace`).
+- SessionStart hook de auto-update (`check-updates.mjs`) en el plugin de Claude.
 
-Actualmente quiero soportar:
+Fuera de este MVP:
 
-- Claude Code
-- Codex
+- Instalador `npx`.
+- Link automático de plugins de Codex.
+- MCP.
+- CI.
 
-Mi primer caso de uso será OpenSpec / Spec-Driven Development.
+## Arquitectura
 
-Mi flujo personal se llama `opsx` y tiene estas etapas:
-
-1. Explore
-2. Propose
-3. Apply
-4. Archive
-
-## Principio de diseño
-
-La fuente de verdad debe vivir en `core/`.
-
-Los adapters para Claude Code y Codex deben generarse o mantenerse como capas finas que empaquetan el core según las convenciones de cada herramienta.
-
-No quiero duplicar instrucciones manualmente.
-
-## Estructura esperada
-
-Proponé una estructura similar a esta, corrigiéndola si hace falta:
-
-```txt
-tobias-agent-toolkit/
-  core/
-    workflows/
-      opsx/
-        explore.md
-        propose.md
-        apply.md
-        archive.md
-        review-spec.md
-
-    rules/
-      sdd-rules.md
-      product-engineer-rules.md
-
-    templates/
-      openspec/
-        proposal.md
-        tasks.md
-        design.md
-
-    scripts/
-      init-openspec.sh
-      validate-openspec.sh
-      check-pending-changes.sh
-
-  adapters/
-    codex/
-      AGENTS.md
-      plugins/
-        opsx-openspec/
-          .codex-plugin/
-            plugin.json
-          skills/
-            opsx-explore/
-              SKILL.md
-            opsx-propose/
-              SKILL.md
-            opsx-apply/
-              SKILL.md
-            opsx-archive/
-              SKILL.md
-
-    claude/
-      CLAUDE.md
-      plugins/
-        opsx-openspec/
-          .claude-plugin/
-            plugin.json
-          skills/
-            opsx-explore/
-              SKILL.md
-            opsx-propose/
-              SKILL.md
-            opsx-apply/
-              SKILL.md
-            opsx-archive/
-              SKILL.md
-
-  scripts/
-    sync-adapters.sh
-    build-codex-adapter.sh
-    build-claude-adapter.sh
-
-  docs/
-    usage-codex.md
-    usage-claude.md
-    architecture.md
-    roadmap.md
-
-  README.md
+```text
+core/
+  workflows/opsx/<stage>/
+    meta.yaml
+    body.md
+  rules/
+  templates/
+        |
+        | npm run build
+        v
+adapters/
+  claude/
+    CLAUDE.md
+    plugins/opsx-openspec/
+  codex/
+    AGENTS.md
+    plugins/opsx-openspec/
 ```
-Qué necesito que hagas
 
-Diseñá el MVP completo.
+## Principios
 
-Quiero que generes:
+- Single source of truth: el contenido reutilizable vive en `core/`.
+- No duplicar instrucciones a mano entre Claude y Codex.
+- Los adapters son generados y se commitean.
+- Las rules se incluyen por workflow, no globalmente.
+- El tooling es Node.js, no bash.
+- La distribución se resuelve después de validar el flujo local.
 
-La arquitectura del repo.
-El contenido de los archivos core.
-El contenido de las skills para Codex.
-El contenido de las skills para Claude Code.
-Un AGENTS.md para Codex.
-Un CLAUDE.md para Claude Code.
-Scripts para sincronizar el core con ambos adapters.
-Una guía de instalación/uso para cada herramienta.
-Una explicación de qué queda para fase 2.
-Una explicación de cuándo tendría sentido agregar MCP.
-Restricciones
-Uso personal.
-No sobreingeniería.
-No duplicar conocimiento innecesariamente.
-Mantener todo versionable en GitHub.
-Priorizar claridad y evolución incremental.
-El MVP debe poder usarse rápido.
-Si alguna diferencia entre Claude Code y Codex requiere adaptar el contenido, explicala.
-Estilo esperado
+## Estructura
 
-Actuá como arquitecto de developer tooling y agentic workflows.
+```text
+core/
+  workflows/
+    opsx/
+      explore/
+      propose/
+      apply/
+      archive/
+  rules/
+    sdd-rules.md
+    product-engineer-rules.md
+  templates/
+    openspec/
 
-Primero diseñá, después generá archivos.
+scripts/
+  build.mjs
 
-Marcá claramente qué es core compartido y qué es adapter específico.
+adapters/
+  claude/
+  codex/
 
-Separá MVP de fase 2.
+openspec/
+  changes/
+  specs/
+```
 
+## Desarrollo
 
----
+Requisitos:
 
-# Mi recomendación final
+- Node.js 20 o superior.
+- OpenSpec CLI si vas a trabajar con changes.
 
-Para tu caso, haría esto:
+Comandos:
 
-```txt
-MVP 1:
-Core + adapters de skills para Claude y Codex
+```bash
+npm run build
+npm run build:check
+```
 
-MVP 2:
-Scripts de sync y validación
+`npm run build` regenera los adapters desde `core/`.
 
-MVP 3:
-Hooks
+`npm run build:check` compara los adapters generados contra lo que `core/` produciría ahora. Si hay drift, falla sin modificar archivos.
 
-MVP 4:
-MCP compartido para GitHub/OpenSpec/documentación externa
+## Cómo editar una skill
 
-La decisión importante es esta:
+Editá solo `core/`.
 
-No construyas “skills para Claude” y “skills para Codex” por separado. Construí tu forma de trabajar una sola vez en core/ y después generá los empaquetados para cada herramienta.
+Ejemplo:
+
+```text
+core/workflows/opsx/propose/body.md
+core/workflows/opsx/propose/meta.yaml
+```
+
+Después regenerá:
+
+```bash
+npm run build
+npm run build:check
+```
+
+No edites a mano archivos bajo `adapters/`. Los archivos generados incluyen un banner con el path fuente.
+
+## Flujo opsx
+
+| Skill | Propósito |
+| --- | --- |
+| `tat-opsx-explore` | Investigar código, specs y requisitos sin implementar. |
+| `tat-opsx-propose` | Crear un change OpenSpec y sus artifacts hasta quedar listo para aplicar. |
+| `tat-opsx-apply` | Implementar tareas pendientes de un change activo. |
+| `tat-opsx-archive` | Archivar un change completado. |
+
+## Distribución
+
+Este repo funciona como marketplace de Claude Code. El catálogo vive en `.claude-plugin/marketplace.json` y publica el plugin `tat-opsx-openspec`.
+
+### Instalar para Claude Code (desde GitHub)
+
+```bash
+claude plugin marketplace add TobiasMoreno/marketplace
+claude plugin install tat-opsx-openspec@tat-marketplace
+```
+
+Si ya tenés una sesión abierta:
+
+```text
+/reload-plugins
+```
+
+### Instalar desde una ruta local (desarrollo)
+
+```bash
+claude plugin marketplace add /ruta/a/tobias-agent-toolkit
+claude plugin install tat-opsx-openspec@tat-marketplace
+```
+
+### Preregistrar el marketplace en un repo consumidor
+
+Copiá `.claude/settings.example.json` a `.claude/settings.json` en el repo donde lo querés usar y commiteálo. Cuando alguien confíe en ese repo, Claude Code ya conoce el marketplace y habilita el plugin.
+
+### Updates manuales
+
+```bash
+claude plugin marketplace update tat-marketplace
+claude plugin update tat-opsx-openspec@tat-marketplace
+```
+
+Después en la sesión: `/reload-plugins`.
+
+### Auto-update (SessionStart hook)
+
+El plugin incluye `hooks/hooks.json` que dispara `scripts/check-updates.mjs` al iniciar cada sesión. Compara la versión instalada contra el catálogo y, si hay diferencia, emite un `systemMessage` no bloqueante:
+
+```text
+[tat] N plugin update(s) available. Open /plugin to apply.
+```
+
+Es best-effort: si falla cualquier paso (red, CLI, JSON), sale en silencio. Para desactivarlo, exportá `TAT_AUTO_UPDATE_DISABLE=1` en tu shell.
+
+Importante: Claude Code solo distribuye updates cuando cambia `version` en `plugin.json`. Después de editar `core/`, hay que bumpear `pluginVersion` en `scripts/build.mjs` y regenerar.
+
+### Instalar para Codex (manual)
+
+Codex no tiene marketplace nativo equivalente. El plugin generado vive en:
+
+```text
+adapters/codex/plugins/tat-opsx-openspec/
+```
+
+Para usarlo, registralo en tu config de Codex apuntando a esa ruta (o copialo a la ubicación que tu instalación de Codex espere). El contenido de las skills es idéntico al de Claude, generado desde el mismo `core/`.
+
+## Roadmap próximo
+
+- Agregar `opsx-review-spec`.
+- Endurecer schemas de plugin si Claude/Codex requieren metadata adicional.
+- Agregar CI para `npm run build:check`.
+- Diseñar instalación local para Codex.
+- Diseñar publicación marketplace para Claude.
+
+## Licencia
+
+Uso personal. Hacé fork si te sirve.

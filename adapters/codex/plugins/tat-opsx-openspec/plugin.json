@@ -1,0 +1,31 @@
+{
+  "id": "tat-opsx-openspec",
+  "name": "TAT OPSX OpenSpec",
+  "version": "0.2.0",
+  "description": "OpenSpec workflow skills generated from tobias-agent-toolkit core.",
+  "author": {
+    "name": "Tobias Moreno"
+  },
+  "skills": [
+    {
+      "name": "tat-opsx-apply",
+      "description": "Implement pending tasks from an active OpenSpec change and mark tasks complete as work is finished.",
+      "path": "skills/tat-opsx-apply/SKILL.md"
+    },
+    {
+      "name": "tat-opsx-archive",
+      "description": "Archive a completed OpenSpec change after checking artifact and task completion.",
+      "path": "skills/tat-opsx-archive/SKILL.md"
+    },
+    {
+      "name": "tat-opsx-explore",
+      "description": "Enter explore mode to investigate code, clarify requirements, and think through options before or during an OpenSpec change.",
+      "path": "skills/tat-opsx-explore/SKILL.md"
+    },
+    {
+      "name": "tat-opsx-propose",
+      "description": "Create an OpenSpec change with proposal, design, specs, and tasks until it is ready for implementation.",
+      "path": "skills/tat-opsx-propose/SKILL.md"
+    }
+  ]
+}

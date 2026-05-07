@@ -1,0 +1,13 @@
+{
+  "enabledPlugins": {
+    "tat-opsx-openspec@tat-marketplace": true
+  },
+  "extraKnownMarketplaces": {
+    "tat-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "TobiasMoreno/marketplace"
+      }
+    }
+  }
+}

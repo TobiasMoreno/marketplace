@@ -1,0 +1,13 @@
+{
+  "name": "tat-marketplace",
+  "owner": {
+    "name": "Tobias Moreno"
+  },
+  "plugins": [
+    {
+      "name": "tat-opsx-openspec",
+      "source": "./adapters/claude/plugins/tat-opsx-openspec",
+      "description": "Workflow OPSX (explore/propose/apply/archive) sobre OpenSpec, generado desde tobias-agent-toolkit core."
+    }
+  ]
+}

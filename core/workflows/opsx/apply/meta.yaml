@@ -1,0 +1,9 @@
+name: tat-opsx-apply
+description: Implement pending tasks from an active OpenSpec change and mark tasks complete as work is finished.
+triggers:
+  - implement an OpenSpec change
+  - apply a change
+  - continue implementation tasks
+rules:
+  - sdd
+  - product-engineer

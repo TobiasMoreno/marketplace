@@ -1,0 +1,9 @@
+name: tat-opsx-propose
+description: Create an OpenSpec change with proposal, design, specs, and tasks until it is ready for implementation.
+triggers:
+  - propose a new change
+  - create an OpenSpec change
+  - formalize requirements before implementation
+rules:
+  - sdd
+  - product-engineer
