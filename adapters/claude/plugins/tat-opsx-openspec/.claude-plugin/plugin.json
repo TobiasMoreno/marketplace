@@ -12,11 +12,5 @@
     "claude-code",
     "codex",
     "workflow"
-  ],
-  "skills": [
-    "tat-opsx-apply",
-    "tat-opsx-archive",
-    "tat-opsx-explore",
-    "tat-opsx-propose"
   ]
 }

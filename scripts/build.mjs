@@ -186,6 +186,7 @@ function renderPassthrough(item) {
 }
 
 function renderClaudePlugin(plugin, skills) {
+  void skills;
   return `${JSON.stringify(
     {
       name: plugin.id,
@@ -193,7 +194,6 @@ function renderClaudePlugin(plugin, skills) {
       description: plugin.description,
       author,
       keywords: plugin.keywords,
-      skills: skills.map((skill) => skill.meta.name),
     },
     null,
     2,

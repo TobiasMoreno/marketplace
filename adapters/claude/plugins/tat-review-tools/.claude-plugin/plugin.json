@@ -12,10 +12,5 @@
     "cleanup",
     "openspec",
     "claude-code"
-  ],
-  "skills": [
-    "tat-openspec-guardian",
-    "tat-review",
-    "tat-unused-files"
   ]
 }
