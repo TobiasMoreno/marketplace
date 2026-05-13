@@ -1,0 +1,28 @@
+{
+  "name": "tat-opsx-openspec",
+  "version": "0.2.0",
+  "description": "OpenSpec workflow skills generated from tobias-agent-toolkit core.",
+  "author": {
+    "name": "Tobias Moreno"
+  },
+  "repository": "https://github.com/TobiasMoreno/marketplace",
+  "license": "MIT",
+  "keywords": [
+    "tat",
+    "opsx",
+    "openspec",
+    "claude-code",
+    "codex",
+    "workflow"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "TAT OPSX OpenSpec",
+    "shortDescription": "OpenSpec workflow skills generated from tobias-agent-toolkit core.",
+    "developerName": "Tobias Moreno",
+    "category": "Productivity",
+    "capabilities": [
+      "Write"
+    ]
+  }
+}

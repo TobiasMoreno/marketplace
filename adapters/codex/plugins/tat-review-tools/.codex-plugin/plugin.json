@@ -1,0 +1,28 @@
+{
+  "name": "tat-review-tools",
+  "version": "0.1.0",
+  "description": "Review, governance, cleanup skills and security agent for the tat marketplace.",
+  "author": {
+    "name": "Tobias Moreno"
+  },
+  "repository": "https://github.com/TobiasMoreno/marketplace",
+  "license": "MIT",
+  "keywords": [
+    "tat",
+    "review",
+    "security",
+    "cleanup",
+    "openspec",
+    "claude-code"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "TAT Review Tools",
+    "shortDescription": "Review, governance, cleanup skills and security agent for the tat marketplace.",
+    "developerName": "Tobias Moreno",
+    "category": "Productivity",
+    "capabilities": [
+      "Write"
+    ]
+  }
+}

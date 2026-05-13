@@ -1,4 +1,5 @@
 ---
+plugin: core
 name: tat-update
 description: "Use when: hay updates pendientes del marketplace tat (anunciados por el SessionStart hook con el mensaje '[tat] N plugin updates available'), o cuando quieres forzar una verificacion + actualizacion manual de los plugins instalados desde tat-marketplace. Aplica los updates pendientes, recarga los plugins en la sesion actual, y reporta que cambio."
 disable-model-invocation: true

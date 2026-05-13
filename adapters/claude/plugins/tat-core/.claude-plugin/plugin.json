@@ -1,0 +1,17 @@
+{
+  "name": "tat-core",
+  "version": "0.1.0",
+  "description": "Foundational infrastructure for tat-marketplace: /tat-update command, SessionStart auto-update hook and personal rules-fallback (tat-rules.md).",
+  "author": {
+    "name": "Tobias Moreno"
+  },
+  "keywords": [
+    "tat",
+    "core",
+    "auto-update",
+    "hooks",
+    "marketplace",
+    "claude-code",
+    "codex"
+  ]
+}

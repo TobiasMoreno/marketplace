@@ -2,7 +2,7 @@
   "id": "tat-review-tools",
   "name": "TAT Review Tools",
   "version": "0.1.0",
-  "description": "Review, governance, cleanup skills, security agent and update command for the tat marketplace.",
+  "description": "Review, governance, cleanup skills and security agent for the tat marketplace.",
   "author": {
     "name": "Tobias Moreno"
   },

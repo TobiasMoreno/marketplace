@@ -8,6 +8,48 @@ const checkMode = process.argv.includes("--check");
 const author = { name: "Tobias Moreno" };
 
 const PLUGINS = {
+  core: {
+    id: "tat-core",
+    version: "0.1.0",
+    description:
+      "Foundational infrastructure for tat-marketplace: /tat-update command, SessionStart auto-update hook and personal rules-fallback (tat-rules.md).",
+    codexName: "TAT Core",
+    keywords: ["tat", "core", "auto-update", "hooks", "marketplace", "claude-code", "codex"],
+    compatibility: null,
+    codexCapabilities: ["Read"],
+    extraFiles: {
+      claude: [
+        {
+          from: "core/hooks/session-start.json",
+          to: "hooks/hooks.json",
+        },
+        {
+          from: "core/scripts/check-updates.mjs",
+          to: "scripts/check-updates.mjs",
+        },
+        {
+          from: "core/rules/tat-rules.md",
+          to: "rules/tat-rules.md",
+        },
+      ],
+      codex: [
+        {
+          from: "core/rules/tat-rules.md",
+          to: "rules/tat-rules.md",
+        },
+      ],
+    },
+  },
+  explain: {
+    id: "tat-explain-tools",
+    version: "0.1.0",
+    description:
+      "Read-direction skills (tat-*) to understand existing systems: architecture, domains, integrations. No new design or code generation.",
+    codexName: "TAT Explain Tools",
+    keywords: ["tat", "explain", "architecture", "diagrams", "documentation", "marketplace", "claude-code", "codex"],
+    compatibility: null,
+    codexCapabilities: ["Read"],
+  },
   opsx: {
     id: "tat-opsx-openspec",
     version: "0.2.0",
@@ -15,16 +57,25 @@ const PLUGINS = {
     codexName: "TAT OPSX OpenSpec",
     keywords: ["tat", "opsx", "openspec", "claude-code", "codex", "workflow"],
     compatibility: "Requires openspec CLI.",
+    codexCapabilities: ["Write"],
   },
   review: {
     id: "tat-review-tools",
     version: "0.1.0",
     description:
-      "Review, governance, cleanup skills, security agent and update command for the tat marketplace.",
+      "Review, governance, cleanup skills and security agent for the tat marketplace.",
     codexName: "TAT Review Tools",
     keywords: ["tat", "review", "security", "cleanup", "openspec", "claude-code"],
     compatibility: null,
+    codexCapabilities: ["Write"],
   },
+};
+
+const DEFAULT_PLUGIN = {
+  workflow: "opsx",
+  skill: "review",
+  agent: "review",
+  command: "review",
 };
 
 function posixPath(value) {
@@ -81,14 +132,18 @@ function parseMeta(source, filePath) {
   return meta;
 }
 
-async function readSkillFolder(dir) {
+async function readSkillFolder(dir, defaultPlugin) {
   const relSource = posixPath(path.relative(root, dir));
   const metaPath = path.join(dir, "meta.yaml");
   const bodyPath = path.join(dir, "body.md");
   const meta = parseMeta(await readFile(metaPath, "utf8"), metaPath);
   const body = (await readFile(bodyPath, "utf8")).trimEnd();
   const rules = await readRules(meta.rules);
-  return { relSource, meta, body, rules };
+  const pluginKey = meta.plugin || defaultPlugin;
+  if (!PLUGINS[pluginKey]) {
+    throw new Error(`Unknown plugin '${pluginKey}' referenced from ${metaPath}`);
+  }
+  return { relSource, meta, body, rules, pluginKey };
 }
 
 async function readWorkflows() {
@@ -96,7 +151,7 @@ async function readWorkflows() {
   const entries = await readdir(base, { withFileTypes: true });
   const workflows = [];
   for (const entry of entries.filter((item) => item.isDirectory())) {
-    const skill = await readSkillFolder(path.join(base, entry.name));
+    const skill = await readSkillFolder(path.join(base, entry.name), DEFAULT_PLUGIN.workflow);
     workflows.push(skill);
   }
   return workflows.sort((a, b) => a.meta.name.localeCompare(b.meta.name));
@@ -112,13 +167,43 @@ async function readStandaloneSkills() {
   }
   const skills = [];
   for (const entry of entries.filter((item) => item.isDirectory())) {
-    const skill = await readSkillFolder(path.join(base, entry.name));
+    const skill = await readSkillFolder(path.join(base, entry.name), DEFAULT_PLUGIN.skill);
     skills.push(skill);
   }
   return skills.sort((a, b) => a.meta.name.localeCompare(b.meta.name));
 }
 
-async function readPassthroughs(subdir) {
+function parseFrontmatterPluginField(content, filePath) {
+  const lines = content.split(/\r?\n/);
+  if (lines[0] !== "---") {
+    throw new Error(`Expected frontmatter at line 1 of ${filePath}`);
+  }
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i] === "---") break;
+    const m = lines[i].match(/^plugin:\s*(.+)$/);
+    if (m) return unquote(m[1].trim());
+  }
+  return null;
+}
+
+function stripPluginFieldFromContent(content) {
+  const lines = content.split(/\r?\n/);
+  if (lines[0] !== "---") return content;
+  const out = [lines[0]];
+  let inFm = true;
+  for (let i = 1; i < lines.length; i++) {
+    if (inFm && lines[i] === "---") {
+      inFm = false;
+      out.push(lines[i]);
+      continue;
+    }
+    if (inFm && /^plugin:\s*/.test(lines[i])) continue;
+    out.push(lines[i]);
+  }
+  return out.join("\n");
+}
+
+async function readPassthroughs(subdir, defaultPlugin) {
   const base = path.join(root, "core", subdir);
   let entries = [];
   try {
@@ -130,8 +215,13 @@ async function readPassthroughs(subdir) {
   for (const entry of entries.filter((item) => item.isFile() && item.name.endsWith(".md"))) {
     const filePath = path.join(base, entry.name);
     const relSource = posixPath(path.relative(root, filePath));
-    const content = await readFile(filePath, "utf8");
-    items.push({ name: entry.name, relSource, content });
+    const rawContent = await readFile(filePath, "utf8");
+    const pluginKey = parseFrontmatterPluginField(rawContent, filePath) || defaultPlugin;
+    if (!PLUGINS[pluginKey]) {
+      throw new Error(`Unknown plugin '${pluginKey}' referenced from ${filePath}`);
+    }
+    const content = stripPluginFieldFromContent(rawContent);
+    items.push({ name: entry.name, relSource, content, pluginKey });
   }
   return items.sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -185,8 +275,7 @@ function renderPassthrough(item) {
   return [lines[0], banner, ...lines.slice(1)].join("\n");
 }
 
-function renderClaudePlugin(plugin, skills) {
-  void skills;
+function renderClaudePlugin(plugin) {
   return `${JSON.stringify(
     {
       name: plugin.id,
@@ -219,6 +308,52 @@ function renderCodexPlugin(plugin, skills) {
   )}\n`;
 }
 
+function renderCodexPluginManifest(plugin, { hasSkills }) {
+  const manifest = {
+    name: plugin.id,
+    version: plugin.version,
+    description: plugin.description,
+    author,
+    repository: "https://github.com/TobiasMoreno/marketplace",
+    license: "MIT",
+    keywords: plugin.keywords,
+  };
+  if (hasSkills) manifest.skills = "./skills/";
+  manifest.interface = {
+    displayName: plugin.codexName,
+    shortDescription: plugin.description,
+    developerName: author.name,
+    category: "Productivity",
+    capabilities: plugin.codexCapabilities,
+  };
+  return `${JSON.stringify(manifest, null, 2)}\n`;
+}
+
+function renderCodexMarketplace() {
+  return `${JSON.stringify(
+    {
+      name: "tat-marketplace",
+      interface: {
+        displayName: "TAT Marketplace",
+      },
+      plugins: Object.values(PLUGINS).map((plugin) => ({
+        name: plugin.id,
+        source: {
+          source: "local",
+          path: `./adapters/codex/plugins/${plugin.id}`,
+        },
+        policy: {
+          installation: "AVAILABLE",
+          authentication: "ON_INSTALL",
+        },
+        category: "Productivity",
+      })),
+    },
+    null,
+    2,
+  )}\n`;
+}
+
 function renderAdapterReadme(adapter) {
   return [
     `# ${adapter === "claude" ? "Claude" : "Codex"} Adapter`,
@@ -229,85 +364,102 @@ function renderAdapterReadme(adapter) {
   ].join("\n");
 }
 
+function renderClaudeMarketplace() {
+  return `${JSON.stringify(
+    {
+      name: "tat-marketplace",
+      owner: { name: author.name },
+      plugins: Object.values(PLUGINS).map((plugin) => ({
+        name: plugin.id,
+        source: `./adapters/claude/plugins/${plugin.id}`,
+        description: plugin.description,
+      })),
+    },
+    null,
+    2,
+  )}\n`;
+}
+
 async function expectedFiles() {
   const workflows = await readWorkflows();
   const standalone = await readStandaloneSkills();
-  const agents = await readPassthroughs("agents");
-  const commands = await readPassthroughs("commands");
+  const agents = await readPassthroughs("agents", DEFAULT_PLUGIN.agent);
+  const commands = await readPassthroughs("commands", DEFAULT_PLUGIN.command);
   const files = new Map();
 
-  const opsx = PLUGINS.opsx;
-  for (const adapter of ["claude", "codex"]) {
-    for (const wf of workflows) {
-      files.set(
-        path.join(
-          root,
-          "adapters",
-          adapter,
-          "plugins",
-          opsx.id,
-          "skills",
-          wf.meta.name,
-          "SKILL.md",
-        ),
-        renderSkill(wf, adapter, { compatibility: opsx.compatibility }),
-      );
-    }
-  }
-  files.set(
-    path.join(root, "adapters", "claude", "plugins", opsx.id, ".claude-plugin", "plugin.json"),
-    renderClaudePlugin(opsx, workflows),
-  );
-  files.set(
-    path.join(root, "adapters", "codex", "plugins", opsx.id, "plugin.json"),
-    renderCodexPlugin(opsx, workflows),
-  );
-  files.set(
-    path.join(root, "adapters", "claude", "plugins", opsx.id, "hooks", "hooks.json"),
-    await readFile(path.join(root, "core", "hooks", "session-start.json"), "utf8"),
-  );
-  files.set(
-    path.join(root, "adapters", "claude", "plugins", opsx.id, "scripts", "check-updates.mjs"),
-    await readFile(path.join(root, "core", "scripts", "check-updates.mjs"), "utf8"),
-  );
+  // Group skills by target plugin
+  const skillsByPlugin = new Map();
+  const recordSkill = (skill) => {
+    const list = skillsByPlugin.get(skill.pluginKey) ?? [];
+    list.push(skill);
+    skillsByPlugin.set(skill.pluginKey, list);
+  };
+  for (const wf of workflows) recordSkill(wf);
+  for (const sk of standalone) recordSkill(sk);
 
-  const review = PLUGINS.review;
-  for (const adapter of ["claude", "codex"]) {
-    for (const skill of standalone) {
+  for (const [pluginKey, plugin] of Object.entries(PLUGINS)) {
+    const skills = skillsByPlugin.get(pluginKey) ?? [];
+    const pluginAgents = agents.filter((a) => a.pluginKey === pluginKey);
+    const pluginCommands = commands.filter((c) => c.pluginKey === pluginKey);
+
+    for (const adapter of ["claude", "codex"]) {
+      for (const skill of skills) {
+        files.set(
+          path.join(
+            root,
+            "adapters",
+            adapter,
+            "plugins",
+            plugin.id,
+            "skills",
+            skill.meta.name,
+            "SKILL.md",
+          ),
+          renderSkill(skill, adapter, { compatibility: plugin.compatibility }),
+        );
+      }
+    }
+
+    // Always emit Claude plugin.json even for plugins with no skills (e.g. tat-core)
+    files.set(
+      path.join(root, "adapters", "claude", "plugins", plugin.id, ".claude-plugin", "plugin.json"),
+      renderClaudePlugin(plugin),
+    );
+    files.set(
+      path.join(root, "adapters", "codex", "plugins", plugin.id, "plugin.json"),
+      renderCodexPlugin(plugin, skills),
+    );
+    files.set(
+      path.join(root, "adapters", "codex", "plugins", plugin.id, ".codex-plugin", "plugin.json"),
+      renderCodexPluginManifest(plugin, { hasSkills: skills.length > 0 }),
+    );
+
+    // Claude-only agents and commands
+    for (const agent of pluginAgents) {
       files.set(
-        path.join(
-          root,
-          "adapters",
-          adapter,
-          "plugins",
-          review.id,
-          "skills",
-          skill.meta.name,
-          "SKILL.md",
-        ),
-        renderSkill(skill, adapter, { compatibility: review.compatibility }),
+        path.join(root, "adapters", "claude", "plugins", plugin.id, "agents", agent.name),
+        renderPassthrough(agent),
       );
     }
-  }
-  files.set(
-    path.join(root, "adapters", "claude", "plugins", review.id, ".claude-plugin", "plugin.json"),
-    renderClaudePlugin(review, standalone),
-  );
-  files.set(
-    path.join(root, "adapters", "codex", "plugins", review.id, "plugin.json"),
-    renderCodexPlugin(review, standalone),
-  );
-  for (const agent of agents) {
-    files.set(
-      path.join(root, "adapters", "claude", "plugins", review.id, "agents", agent.name),
-      renderPassthrough(agent),
-    );
-  }
-  for (const cmd of commands) {
-    files.set(
-      path.join(root, "adapters", "claude", "plugins", review.id, "commands", cmd.name),
-      renderPassthrough(cmd),
-    );
+    for (const cmd of pluginCommands) {
+      files.set(
+        path.join(root, "adapters", "claude", "plugins", plugin.id, "commands", cmd.name),
+        renderPassthrough(cmd),
+      );
+    }
+
+    // Extra static files (hooks, scripts, rules) copied verbatim from core/.
+    const extras = plugin.extraFiles ?? {};
+    for (const adapter of ["claude", "codex"]) {
+      for (const extra of extras[adapter] ?? []) {
+        const sourcePath = path.join(root, extra.from);
+        const content = await readFile(sourcePath, "utf8");
+        files.set(
+          path.join(root, "adapters", adapter, "plugins", plugin.id, extra.to),
+          content,
+        );
+      }
+    }
   }
 
   files.set(
@@ -317,6 +469,14 @@ async function expectedFiles() {
   files.set(
     path.join(root, "adapters", "codex", "AGENTS.md"),
     renderAdapterReadme("codex"),
+  );
+  files.set(
+    path.join(root, ".agents", "plugins", "marketplace.json"),
+    renderCodexMarketplace(),
+  );
+  files.set(
+    path.join(root, ".claude-plugin", "marketplace.json"),
+    renderClaudeMarketplace(),
   );
 
   return files;

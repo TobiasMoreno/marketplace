@@ -1,0 +1,30 @@
+{
+  "name": "tat-explain-tools",
+  "version": "0.1.0",
+  "description": "Read-direction skills (tat-*) to understand existing systems: architecture, domains, integrations. No new design or code generation.",
+  "author": {
+    "name": "Tobias Moreno"
+  },
+  "repository": "https://github.com/TobiasMoreno/marketplace",
+  "license": "MIT",
+  "keywords": [
+    "tat",
+    "explain",
+    "architecture",
+    "diagrams",
+    "documentation",
+    "marketplace",
+    "claude-code",
+    "codex"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "TAT Explain Tools",
+    "shortDescription": "Read-direction skills (tat-*) to understand existing systems: architecture, domains, integrations. No new design or code generation.",
+    "developerName": "Tobias Moreno",
+    "category": "Productivity",
+    "capabilities": [
+      "Read"
+    ]
+  }
+}

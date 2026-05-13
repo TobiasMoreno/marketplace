@@ -1,0 +1,16 @@
+{
+  "id": "tat-explain-tools",
+  "name": "TAT Explain Tools",
+  "version": "0.1.0",
+  "description": "Read-direction skills (tat-*) to understand existing systems: architecture, domains, integrations. No new design or code generation.",
+  "author": {
+    "name": "Tobias Moreno"
+  },
+  "skills": [
+    {
+      "name": "tat-describe-architecture",
+      "description": "Use when: producing an as-is architecture diagram of a codebase, service or feature; writing or updating RFCs, design docs and onboarding material; explaining how components interact or locating the blast radius of a change. Describes existing architecture as a Mermaid diagram plus a short narrative grounded in the actual code. Does not design new architecture.",
+      "path": "skills/tat-describe-architecture/SKILL.md"
+    }
+  ]
+}

@@ -5,14 +5,24 @@
   },
   "plugins": [
     {
+      "name": "tat-core",
+      "source": "./adapters/claude/plugins/tat-core",
+      "description": "Foundational infrastructure for tat-marketplace: /tat-update command, SessionStart auto-update hook and personal rules-fallback (tat-rules.md)."
+    },
+    {
+      "name": "tat-explain-tools",
+      "source": "./adapters/claude/plugins/tat-explain-tools",
+      "description": "Read-direction skills (tat-*) to understand existing systems: architecture, domains, integrations. No new design or code generation."
+    },
+    {
       "name": "tat-opsx-openspec",
       "source": "./adapters/claude/plugins/tat-opsx-openspec",
-      "description": "Workflow OPSX (explore/propose/apply/archive) sobre OpenSpec, generado desde tobias-agent-toolkit core."
+      "description": "OpenSpec workflow skills generated from tobias-agent-toolkit core."
     },
     {
       "name": "tat-review-tools",
       "source": "./adapters/claude/plugins/tat-review-tools",
-      "description": "Skills de revision de codigo, gobernanza OpenSpec, limpieza de archivos sin uso, agente de seguridad y command de auto-update."
+      "description": "Review, governance, cleanup skills and security agent for the tat marketplace."
     }
   ]
 }
