@@ -281,7 +281,31 @@ claude plugin update --all
 
 O directamente desde la sesión: `/tat-update` (aplica updates pendientes y reporta el delta) seguido de `/reload-plugins`. El comando vive en `tat-core`.
 
-### Auto-update (SessionStart hook)
+### Auto-update
+
+Dos mecanismos disponibles. Podés usar uno, el otro, o ambos (conviven sin conflicto).
+
+**Opción A — Auto-update nativo de Claude Code (aplica solo).**
+
+Claude Code re-baja el catálogo al inicio de sesión y, si cambió `version` en algún `plugin.json`, descarga e instala la nueva versión sin intervención. Activalo:
+
+- Por UI: `/plugin` → tab **Marketplaces** → seleccionar `tat-marketplace` → **Enable auto-update**.
+- Por settings: agregá `"autoUpdate": true` al marketplace en `extraKnownMarketplaces` (o copiá `.claude/settings.example.json`).
+
+  ```json
+  {
+    "extraKnownMarketplaces": {
+      "tat-marketplace": {
+        "source": { "source": "github", "repo": "TobiasMoreno/marketplace" },
+        "autoUpdate": true
+      }
+    }
+  }
+  ```
+
+Importante: solo dispara cuando cambia `version` en `plugin.json`. Sin bump, push a `main` no propaga nada (ver sección [Cómo editar `core/`](#cómo-editar-core)).
+
+**Opción B — SessionStart hook de `tat-core` (solo notifica).**
 
 El plugin `tat-core` incluye `hooks/hooks.json` que dispara `scripts/check-updates.mjs` al iniciar cada sesión. Compara la versión instalada contra el catálogo y, si hay diferencia, emite un `systemMessage` no bloqueante:
 
@@ -289,7 +313,9 @@ El plugin `tat-core` incluye `hooks/hooks.json` que dispara `scripts/check-updat
 [tat] N plugin update(s) available. Run /tat-update to apply.
 ```
 
-Es best-effort: si falla cualquier paso (red, CLI, JSON), sale en silencio. Para desactivarlo, exportá `TAT_AUTO_UPDATE_DISABLE=1` en tu shell.
+No aplica nada automáticamente — el usuario decide cuándo correr `/tat-update`. Es best-effort: si falla cualquier paso (red, CLI, JSON), sale en silencio. Para desactivarlo, exportá `TAT_AUTO_UPDATE_DISABLE=1` en tu shell.
+
+**Cuál elegir.** Auto-update nativo si querés cero fricción. Hook si preferís control explícito ("avísame, no me cambies cosas sin permiso").
 
 Sobre paths dentro del plugin instalado, ver [docs/claude-plugin-root.md](./docs/claude-plugin-root.md).
 
