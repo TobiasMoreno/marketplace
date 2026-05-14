@@ -42,7 +42,7 @@ const PLUGINS = {
   },
   explain: {
     id: "tat-explain-tools",
-    version: "0.1.0",
+    version: "0.2.0",
     description:
       "Read-direction skills (tat-*) to understand existing systems: architecture, domains, integrations. No new design or code generation.",
     codexName: "TAT Explain Tools",
@@ -52,7 +52,7 @@ const PLUGINS = {
   },
   opsx: {
     id: "tat-opsx-openspec",
-    version: "0.2.0",
+    version: "0.3.0",
     description: "OpenSpec workflow skills generated from tobias-agent-toolkit core.",
     codexName: "TAT OPSX OpenSpec",
     keywords: ["tat", "opsx", "openspec", "claude-code", "codex", "workflow"],

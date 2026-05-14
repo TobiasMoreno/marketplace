@@ -1,0 +1,9 @@
+name: tat-opsx-review-spec
+description: Verify that an implemented OpenSpec change matches its approved spec before archive, flagging drift between code and delta specs.
+triggers:
+  - review an implemented change against its spec
+  - verify spec compliance before archive
+  - check implementation matches OpenSpec delta
+rules:
+  - sdd
+  - product-engineer

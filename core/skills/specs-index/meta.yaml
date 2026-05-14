@@ -1,0 +1,4 @@
+plugin: explain
+name: tat-specs-index
+description: "Use when: you work across multiple repos and need a unified view of OpenSpec changes (active and archived) without designating any one repo as the source of truth. Walks each repo's openspec/ directory and produces a cross-repo index of changes, stale entries, and overlap signals. Read-only — never modifies any repo."
+disable-model-invocation: true

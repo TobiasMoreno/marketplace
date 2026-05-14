@@ -1,7 +1,7 @@
 {
   "id": "tat-opsx-openspec",
   "name": "TAT OPSX OpenSpec",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "OpenSpec workflow skills generated from tobias-agent-toolkit core.",
   "author": {
     "name": "Tobias Moreno"
@@ -26,6 +26,11 @@
       "name": "tat-opsx-propose",
       "description": "Create an OpenSpec change with proposal, design, specs, and tasks until it is ready for implementation.",
       "path": "skills/tat-opsx-propose/SKILL.md"
+    },
+    {
+      "name": "tat-opsx-review-spec",
+      "description": "Verify that an implemented OpenSpec change matches its approved spec before archive, flagging drift between code and delta specs.",
+      "path": "skills/tat-opsx-review-spec/SKILL.md"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "name": "tat-opsx-openspec",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "OpenSpec workflow skills generated from tobias-agent-toolkit core.",
   "author": {
     "name": "Tobias Moreno"

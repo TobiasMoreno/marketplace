@@ -1,6 +1,6 @@
 {
   "name": "tat-explain-tools",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Read-direction skills (tat-*) to understand existing systems: architecture, domains, integrations. No new design or code generation.",
   "author": {
     "name": "Tobias Moreno"

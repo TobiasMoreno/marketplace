@@ -41,7 +41,7 @@ Este repo está en MVP local.
 Ya incluye:
 
 - `core/` como fuente editable de workflows, skills, agents, commands, rules y templates.
-- Workflows `tat-opsx-explore`, `tat-opsx-propose`, `tat-opsx-apply` y `tat-opsx-archive`.
+- Workflows `tat-opsx-explore`, `tat-opsx-propose`, `tat-opsx-apply`, `tat-opsx-review-spec` y `tat-opsx-archive`.
 - Cuatro plugins generados: `tat-core`, `tat-explain-tools`, `tat-opsx-openspec`, `tat-review-tools`.
 - Routing por plugin mediante el campo `plugin:` en `meta.yaml` y en el frontmatter de agents/commands.
 - Generación de adapters para Claude y Codex.
@@ -202,6 +202,7 @@ Es el plugin foundational: instalalo siempre. Sin él, no hay auto-update ni com
 | Skill                       | Propósito                                                                              |
 | --------------------------- | -------------------------------------------------------------------------------------- |
 | `tat-describe-architecture` | Diagrama Mermaid + narrativa as-is de un repo/servicio/feature, basado en el código.   |
+| `tat-specs-index`           | Index multi-repo de OpenSpec changes (activos, archivados, stale, overlap). Read-only. |
 
 Read-direction: documenta lo que existe, no propone rediseños ni genera código nuevo.
 
@@ -209,10 +210,11 @@ Read-direction: documenta lo que existe, no propone rediseños ni genera código
 
 | Skill              | Propósito                                                                 |
 | ------------------ | ------------------------------------------------------------------------- |
-| `tat-opsx-explore` | Investigar código, specs y requisitos sin implementar.                    |
-| `tat-opsx-propose` | Crear un change OpenSpec y sus artifacts hasta quedar listo para aplicar. |
-| `tat-opsx-apply`   | Implementar tareas pendientes de un change activo.                        |
-| `tat-opsx-archive` | Archivar un change completado.                                            |
+| `tat-opsx-explore`     | Investigar código, specs y requisitos sin implementar.                                |
+| `tat-opsx-propose`     | Crear un change OpenSpec y sus artifacts hasta quedar listo para aplicar.             |
+| `tat-opsx-apply`       | Implementar tareas pendientes de un change activo.                                    |
+| `tat-opsx-review-spec` | Verificar que el código implementado cumpla con el delta spec antes de archivar.      |
+| `tat-opsx-archive`     | Archivar un change completado.                                                        |
 
 ### `tat-review-tools` — revisión, gobernanza y limpieza
 
@@ -244,6 +246,17 @@ Si ya tenés una sesión abierta:
 ```text
 /reload-plugins
 ```
+
+### Instalar / desinstalar desde el menú interactivo
+
+Si preferís elegir qué plugins instalar (o desinstalar más tarde) sin tipear cada comando, usá el menú nativo:
+
+```text
+/plugin marketplace add TobiasMoreno/marketplace   # solo la primera vez
+/plugin
+```
+
+Dentro del menú podés navegar `tat-marketplace`, marcar plugins para **Install**, o seleccionar plugins ya instalados para **Disable** (apagar sin borrar) o **Uninstall** (remover). `tat-core` es obligatorio si querés `/tat-update` y el hook de auto-update.
 
 ### Instalar desde una ruta local (desarrollo)
 
